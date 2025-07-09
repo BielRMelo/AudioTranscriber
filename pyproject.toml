@@ -8,4 +8,7 @@ dependencies = [
     "ffmpeg>=1.4",
     "openai>=1.93.3",
     "streamlit>=1.46.1",
+    "psycopg2-binary>=2.9.10",
+    "sqlalchemy>=2.0.41",
+    "google-genai>=1.24.0",
 ]

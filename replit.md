@@ -14,14 +14,17 @@ Preferred communication style: Simple, everyday language.
 - **Framework**: Streamlit web framework
 - **Interface**: Single-page application with file upload and processing workflow
 - **User Experience**: Progress tracking with visual feedback during processing
-- **Layout**: Wide layout configuration for better file handling display
+- **Layout**: Wide layout configuration with sidebar for database features
+- **Database UI**: Sidebar with statistics, search functionality, and recent transcriptions
 
 ### Backend Architecture
-- **Modular Design**: Three main components separated into distinct modules:
+- **Modular Design**: Four main components separated into distinct modules:
   - `app.py`: Main Streamlit application and UI logic
   - `audio_processor.py`: Audio format conversion handling
   - `transcription_service.py`: Audio transcription functionality
-- **Processing Pipeline**: Sequential workflow (upload → convert → transcribe)
+  - `database_service.py`: PostgreSQL database operations and record management
+- **Processing Pipeline**: Sequential workflow (upload → convert → transcribe → save to database)
+- **Database Layer**: PostgreSQL with SQLAlchemy ORM for persistent storage
 
 ## Key Components
 
@@ -35,11 +38,20 @@ Preferred communication style: Simple, everyday language.
 
 ### Transcription Service (`transcription_service.py`)
 - **Purpose**: Transcribes audio files to text
-- **Technology**: OpenAI Whisper API
+- **Technology**: Google Gemini API
 - **Features**:
   - Multi-language support (Portuguese, English, Spanish, French)
-  - File size validation (25MB OpenAI limit)
-  - Default language set to Portuguese for Brazilian Portuguese transcription
+  - File size validation (50MB Gemini limit)
+  - User-selectable language with Portuguese as default
+
+### Database Service (`database_service.py`)
+- **Purpose**: Manages persistent storage of transcription records
+- **Technology**: PostgreSQL with SQLAlchemy ORM
+- **Features**:
+  - Transcription history storage with metadata
+  - Search functionality across transcription text
+  - Statistics tracking (success rates, processing times)
+  - Error logging and recovery tracking
 
 ### Main Application (`app.py`)
 - **Purpose**: Orchestrates the entire workflow and provides user interface
@@ -51,30 +63,34 @@ Preferred communication style: Simple, everyday language.
 ## Data Flow
 
 1. **File Upload**: User uploads OGG audio file through Streamlit interface
-2. **Validation**: File type and size validation
-3. **Temporary Storage**: Uploaded file saved to temporary location
-4. **Audio Conversion**: OGG file converted to MP3 using FFmpeg
-5. **Transcription**: MP3 file sent to OpenAI Whisper API for transcription
-6. **Results Display**: Transcribed text presented to user
-7. **Cleanup**: Temporary files removed after processing
+2. **Language Selection**: User selects transcription language (Portuguese, English, Spanish, French)
+3. **Validation**: File type and size validation
+4. **Temporary Storage**: Uploaded file saved to temporary location
+5. **Audio Conversion**: OGG file converted to MP3 using FFmpeg
+6. **Transcription**: MP3 file sent to OpenAI Whisper API for transcription
+7. **Database Storage**: Transcription record saved to PostgreSQL with metadata
+8. **Results Display**: Transcribed text presented to user with download options
+9. **Cleanup**: Temporary files removed after processing
 
 ## External Dependencies
 
 ### Required Python Packages
 - `streamlit`: Web application framework
 - `ffmpeg-python`: Audio conversion wrapper
-- `openai`: OpenAI API client for Whisper transcription
+- `google-genai`: Google Gemini API client for audio transcription
+- `psycopg2-binary`: PostgreSQL database adapter
+- `sqlalchemy`: SQL toolkit and ORM for database operations
 - `pathlib`: File path handling (built-in)
 - `tempfile`: Temporary file management (built-in)
 - `os`: Operating system interface (built-in)
 
 ### System Dependencies
 - **FFmpeg**: Must be installed on the system for audio conversion
-- **OpenAI API Key**: Required environment variable `OPENAI_API_KEY`
+- **Gemini API Key**: Required environment variable `GEMINI_API_KEY`
 
 ### External Services
-- **OpenAI Whisper API**: Cloud-based audio transcription service
-  - File size limit: 25MB
+- **Google Gemini API**: Cloud-based audio transcription service
+  - File size limit: 50MB
   - Supports multiple languages
   - Requires API authentication
 
@@ -83,11 +99,11 @@ Preferred communication style: Simple, everyday language.
 ### Environment Requirements
 - Python 3.7+ environment
 - FFmpeg installed and accessible in system PATH
-- OpenAI API key configured as environment variable
+- Gemini API key configured as environment variable
 - Sufficient disk space for temporary file processing
 
 ### Configuration Needs
-- Environment variable: `OPENAI_API_KEY`
+- Environment variable: `GEMINI_API_KEY`
 - System dependency: FFmpeg binary
 - Streamlit configuration for wide layout and custom page settings
 
