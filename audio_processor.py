@@ -57,17 +57,14 @@ class AudioProcessor:
             
             return mp3_output_path
             
-        except ffmpeg.Error as e:
-            # Handle FFmpeg specific errors
-            error_message = "FFmpeg conversion error"
-            if e.stderr:
-                stderr_text = e.stderr.decode('utf-8')
-                error_message += f": {stderr_text}"
-            raise Exception(error_message)
-        
         except Exception as e:
-            # Handle other errors
-            raise Exception(f"Audio conversion failed: {str(e)}")
+            # Handle FFmpeg specific errors
+            if hasattr(e, 'stderr') and e.stderr:
+                stderr_text = e.stderr.decode('utf-8') if isinstance(e.stderr, bytes) else str(e.stderr)
+                error_message = f"FFmpeg conversion error: {stderr_text}"
+            else:
+                error_message = f"Audio conversion failed: {str(e)}"
+            raise Exception(error_message)
     
     def validate_audio_file(self, file_path):
         """
