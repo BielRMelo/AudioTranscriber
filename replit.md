@@ -107,6 +107,12 @@ Preferred communication style: Simple, everyday language.
 - System dependency: FFmpeg binary
 - Streamlit configuration for wide layout and custom page settings
 
+### Deployment Files
+- **run_app.bat**: Executável principal para iniciar o aplicativo
+- **setup.bat**: Script de configuração automática (executa como administrador)
+- **LEIA_ME.txt**: Instruções completas de instalação e uso
+- **app.py**: Aplicativo principal Streamlit
+
 ### Scalability Considerations
 - File processing is synchronous and single-threaded
 - Temporary file storage scales with concurrent users

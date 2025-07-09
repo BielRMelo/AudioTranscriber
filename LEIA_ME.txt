@@ -1,0 +1,65 @@
+OGG AUDIO TRANSCRIBER - INSTRUÇÕES DE INSTALAÇÃO
+================================================
+
+Este aplicativo converte arquivos de áudio OGG para MP3 e transcreve o áudio em texto usando IA.
+
+REQUISITOS:
+-----------
+1. Python 3.7 ou superior
+2. FFmpeg instalado no sistema
+3. Chave da API do Google Gemini
+
+INSTALAÇÃO PASSO A PASSO:
+-------------------------
+
+1. INSTALAR PYTHON:
+   - Baixe e instale Python de: https://python.org/downloads
+   - Durante a instalação, marque "Add Python to PATH"
+
+2. INSTALAR FFMPEG:
+   - Baixe FFmpeg de: https://ffmpeg.org/download.html
+   - Extraia o arquivo e adicione ao PATH do Windows
+   - OU use chocolatey: choco install ffmpeg
+
+3. OBTER CHAVE DA API GEMINI:
+   - Acesse: https://ai.google.dev
+   - Crie uma conta gratuita
+   - Gere uma chave da API
+   - Copie a chave (começa com "AIza...")
+
+4. CONFIGURAR CHAVE DA API:
+   - Abra Prompt de Comando como Administrador
+   - Execute: setx GEMINI_API_KEY "sua_chave_aqui"
+   - Substitua "sua_chave_aqui" pela sua chave real
+   - Reinicie o computador
+
+5. EXECUTAR O APLICATIVO:
+   - Duplo clique em "run_app.bat"
+   - O aplicativo abrirá no navegador em http://localhost:5000
+
+USAR O APLICATIVO:
+------------------
+1. Selecione o idioma de transcrição
+2. Faça upload de um arquivo .ogg
+3. Clique em "Process Audio"
+4. Baixe a transcrição em .txt
+5. Baixe o arquivo MP3 convertido
+
+SOLUÇÃO DE PROBLEMAS:
+--------------------
+- Se aparecer "Python não encontrado": Reinstale Python e marque "Add to PATH"
+- Se aparecer "FFmpeg não encontrado": Instale FFmpeg e adicione ao PATH
+- Se aparecer "GEMINI_API_KEY não configurada": Configure a chave da API
+- Se der erro de quota: Verifique se sua chave da API está válida
+
+RECURSOS:
+---------
+- Conversão OGG para MP3
+- Transcrição em Português, Inglês, Espanhol e Francês
+- Histórico de transcrições no banco de dados
+- Busca nas transcrições antigas
+- Estatísticas de uso
+
+SUPORTE:
+--------
+Para mais ajuda, consulte a documentação técnica em replit.md
