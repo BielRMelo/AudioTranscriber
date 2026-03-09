@@ -77,7 +77,7 @@ class TranscriptionService:
             import base64
             
             response = client.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.0-flash",
                 contents=[
                     types.Part.from_bytes(
                         data=audio_bytes,
@@ -158,7 +158,7 @@ class TranscriptionService:
             client = genai.Client(api_key=current_api_key)
             # Try a simple API call to validate the key
             response = client.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.0-flash",
                 contents="Hello"
             )
             return True
