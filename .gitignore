@@ -21,6 +21,4 @@ htmlcov/
 transcriptions.db
 *.ogg
 *.mp3
-.streamlit/
-.replit
-uv.lock
+# .streamlit/
