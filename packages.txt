@@ -1,3 +1,4 @@
 ffmpeg
 libpq-dev
 cmake
+libarrow-dev
