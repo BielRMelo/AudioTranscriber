@@ -1,5 +1,6 @@
 import os
 from google import genai
+from openai import OpenAI
 
 class TranscriptionService:
     """Handles audio transcription using Google Gemini"""
@@ -7,6 +8,7 @@ class TranscriptionService:
     def __init__(self):
         # We will initialize the client dynamically or try to get from env
         self.api_key = os.getenv("GEMINI_API_KEY")
+        self.openai_api_key = os.getenv("OPENAI_API_KEY")
         self.client = None
         if self.api_key:
             self.client = genai.Client(api_key=self.api_key)
@@ -19,14 +21,15 @@ class TranscriptionService:
             'fr': 'French'
         }
     
-    def transcribe_audio(self, audio_file_path, language="pt", api_key=None):
+    def transcribe_audio(self, audio_file_path, language="pt", api_key=None, service="gemini"):
         """
-        Transcribe audio file using Google Gemini
+        Transcribe audio file using Google Gemini or OpenAI Whisper
         
         Args:
             audio_file_path (str): Path to the audio file
             language (str): Language code for transcription (default: 'pt' for Portuguese)
-            api_key (str): Optional Gemini API Key directly passed from the UI
+            api_key (str): Optional API Key directly passed from the UI
+            service (str): Transcription service to use ("gemini" or "openai")
             
         Returns:
             str: Transcribed text
@@ -34,6 +37,13 @@ class TranscriptionService:
         Raises:
             Exception: If transcription fails
         """
+        if service == "openai":
+            return self.transcribe_with_openai(audio_file_path, language, api_key)
+        else:
+            return self.transcribe_with_gemini(audio_file_path, language, api_key)
+
+    def transcribe_with_gemini(self, audio_file_path, language="pt", api_key=None):
+        """Original Gemini transcription logic"""
         try:
             # Set up client with provided API key or fallback to env
             current_api_key = api_key or self.api_key
@@ -112,6 +122,39 @@ class TranscriptionService:
                 raise Exception("Audio file is too large for processing. Maximum size is 50MB.")
             else:
                 raise Exception(f"Transcription failed: {error_message}")
+                
+    def transcribe_with_openai(self, audio_file_path, language="pt", api_key=None):
+        """Transcribe audio using OpenAI Whisper"""
+        try:
+            current_api_key = api_key or self.openai_api_key
+            if not current_api_key:
+                raise ValueError("An OpenAI API Key must be provided to transcribe audio.")
+            
+            client = OpenAI(api_key=current_api_key)
+            
+            # Validate input file
+            if not os.path.exists(audio_file_path):
+                raise FileNotFoundError(f"Audio file not found: {audio_file_path}")
+            
+            # Language mapping for Whisper
+            language_map = {
+                'pt': 'pt',
+                'en': 'en',
+                'es': 'es',
+                'fr': 'fr'
+            }
+            
+            with open(audio_file_path, 'rb') as audio_file:
+                transcript = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    language=language_map.get(language, 'pt')
+                )
+            
+            return transcript.text
+            
+        except Exception as e:
+            raise Exception(f"OpenAI transcription failed: {str(e)}")
     
     def get_supported_languages(self):
         """
@@ -161,6 +204,28 @@ class TranscriptionService:
                 model="gemini-2.0-flash",
                 contents="Hello"
             )
+            return True
+        except Exception:
+            return False
+
+    def validate_openai_api_key(self, api_key=None):
+        """
+        Validate that the OpenAI API key is working
+        
+        Args:
+            api_key (str): Optional OpenAI API Key directly passed from the UI
+            
+        Returns:
+            bool: True if API key is valid, False otherwise
+        """
+        try:
+            current_api_key = api_key or self.openai_api_key
+            if not current_api_key:
+                return False
+                
+            client = OpenAI(api_key=current_api_key)
+            # Whisper doesn't have a direct "ping" endpoint, but we can list models as a proxy
+            client.models.list()
             return True
         except Exception:
             return False

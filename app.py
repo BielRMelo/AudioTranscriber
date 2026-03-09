@@ -26,24 +26,45 @@ def main():
     with st.sidebar:
         st.header("🔑 Configuration")
         # Check for API key in env or session state
-        api_key = os.environ.get("GEMINI_API_KEY") or st.session_state.get("gemini_api_key", "")
-        
-        entered_api_key = st.text_input(
+        entered_gemini_key = st.text_input(
             "Gemini API Key",
-            value=api_key,
+            value=os.environ.get("GEMINI_API_KEY") or st.session_state.get("gemini_api_key", ""),
             type="password",
             placeholder="AIzaSy...",
-            help="Enter your Google Gemini API Key. You can get one at https://ai.google.dev"
+            help="Enter your Google Gemini API Key."
         )
         
-        if entered_api_key:
-            st.session_state["gemini_api_key"] = entered_api_key
-            # Temporarily set in env for google-genai to pick it up if needed by default, 
-            # though we will also pass it explicitly.
-            os.environ["GEMINI_API_KEY"] = entered_api_key
+        entered_openai_key = st.text_input(
+            "OpenAI API Key",
+            value=os.environ.get("OPENAI_API_KEY") or st.session_state.get("openai_api_key", ""),
+            type="password",
+            placeholder="sk-...",
+            help="Enter your OpenAI API Key."
+        )
+        
+        if entered_gemini_key:
+            st.session_state["gemini_api_key"] = entered_gemini_key
+            os.environ["GEMINI_API_KEY"] = entered_gemini_key
             
-        if not entered_api_key:
-            st.warning("Please enter your Gemini API Key to use the transcription feature.")
+        if entered_openai_key:
+            st.session_state["openai_api_key"] = entered_openai_key
+            os.environ["OPENAI_API_KEY"] = entered_openai_key
+            
+        st.divider()
+        
+        st.header("⚙️ Service Selection")
+        selected_service = st.selectbox(
+            "Transcription Service",
+            options=["gemini", "openai"],
+            format_func=lambda x: "Google Gemini" if x == "gemini" else "OpenAI Whisper",
+            index=0
+        )
+        st.session_state["selected_service"] = selected_service
+        
+        if selected_service == "gemini" and not entered_gemini_key:
+            st.warning("Please enter your Gemini API Key.")
+        elif selected_service == "openai" and not entered_openai_key:
+            st.warning("Please enter your OpenAI API Key.")
             
         st.divider()
         
@@ -102,11 +123,16 @@ def main():
             
             # Process button
             if st.button("🔄 Process Audio", type="primary"):
-                current_api_key = st.session_state.get("gemini_api_key")
-                if not current_api_key:
-                    st.error("Please enter your Gemini API Key in the sidebar first.")
+                service = st.session_state.get("selected_service", "gemini")
+                if service == "gemini":
+                    current_api_key = st.session_state.get("gemini_api_key")
                 else:
-                    process_audio_file(uploaded_file, audio_processor, transcription_service, db_service, current_api_key)
+                    current_api_key = st.session_state.get("openai_api_key")
+                    
+                if not current_api_key:
+                    st.error(f"Please enter your {service.capitalize()} API Key in the sidebar first.")
+                else:
+                    process_audio_file(uploaded_file, audio_processor, transcription_service, db_service, current_api_key, service)
     
     with col2:
         # Language selection
@@ -119,7 +145,7 @@ def main():
         )
         st.session_state['selected_language'] = language
 
-def process_audio_file(uploaded_file, audio_processor, transcription_service, db_service, api_key):
+def process_audio_file(uploaded_file, audio_processor, transcription_service, db_service, api_key, service="gemini"):
     """Process the uploaded audio file through conversion and transcription"""
     
     # Create progress tracking
@@ -153,10 +179,10 @@ def process_audio_file(uploaded_file, audio_processor, transcription_service, db
         
         # Step 3: Transcribe audio
         language_names = {'pt': 'Portuguese', 'en': 'English', 'es': 'Spanish', 'fr': 'French'}
-        status_text.text(f"🎤 Transcribing audio ({language_names.get(language, 'Portuguese')})...")
+        status_text.text(f"🎤 Transcribing audio ({language_names.get(language, 'Portuguese')}) via {service.capitalize()}...")
         progress_bar.progress(70)
         
-        transcription = transcription_service.transcribe_audio(mp3_path, language=language, api_key=api_key)
+        transcription = transcription_service.transcribe_audio(mp3_path, language=language, api_key=api_key, service=service)
         
         # Step 4: Save to database
         status_text.text("💾 Saving to database...")
