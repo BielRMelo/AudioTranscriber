@@ -81,7 +81,7 @@ class TranscriptionService:
                 contents=[
                     types.Part.from_bytes(
                         data=audio_bytes,
-                        mime_type="audio/mp3"
+                        mime_type="audio/mpeg"  # MP3 is audio/mpeg
                     ),
                     prompt
                 ]
@@ -158,7 +158,7 @@ class TranscriptionService:
             client = genai.Client(api_key=current_api_key)
             # Try a simple API call to validate the key
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-1.5-flash",
                 contents="Hello"
             )
             return True

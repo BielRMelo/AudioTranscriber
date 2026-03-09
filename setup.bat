@@ -31,16 +31,31 @@ if errorlevel 1 (
 )
 
 echo.
-echo Instalando dependências Python...
-pip install --upgrade pip
-pip install streamlit ffmpeg-python google-genai psycopg2-binary sqlalchemy
+echo Verificando ambiente virtual...
+if not exist .venv (
+    echo Criando ambiente virtual (.venv)...
+    python -m venv .venv
+    if errorlevel 1 (
+        echo Erro ao criar ambiente virtual.
+        pause
+        exit /b 1
+    )
+    echo ✓ Ambiente virtual criado!
+) else (
+    echo ✓ Ambiente virtual já existe.
+)
+
+echo.
+echo Instalando/Atualizando dependências no ambiente virtual...
+.venv\Scripts\python -m pip install --upgrade pip
+.venv\Scripts\python -m pip install -r requirements.txt
 
 if errorlevel 1 (
-    echo Erro ao instalar dependências Python.
+    echo Erro ao instalar dependências Python no ambiente virtual.
     pause
     exit /b 1
 ) else (
-    echo ✓ Dependências Python instaladas!
+    echo ✓ Dependências instaladas no ambiente virtual!
 )
 
 echo.
