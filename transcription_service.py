@@ -5,13 +5,11 @@ class TranscriptionService:
     """Handles audio transcription using Google Gemini"""
     
     def __init__(self):
-        # Get Gemini API key from environment variables
+        # We will initialize the client dynamically or try to get from env
         self.api_key = os.getenv("GEMINI_API_KEY")
-        if not self.api_key:
-            raise ValueError("GEMINI_API_KEY environment variable is required")
-        
-        # Initialize Gemini client
-        self.client = genai.Client(api_key=self.api_key)
+        self.client = None
+        if self.api_key:
+            self.client = genai.Client(api_key=self.api_key)
         
         # Supported languages
         self.supported_languages = {
@@ -21,13 +19,14 @@ class TranscriptionService:
             'fr': 'French'
         }
     
-    def transcribe_audio(self, audio_file_path, language="pt"):
+    def transcribe_audio(self, audio_file_path, language="pt", api_key=None):
         """
         Transcribe audio file using Google Gemini
         
         Args:
             audio_file_path (str): Path to the audio file
             language (str): Language code for transcription (default: 'pt' for Portuguese)
+            api_key (str): Optional Gemini API Key directly passed from the UI
             
         Returns:
             str: Transcribed text
@@ -36,6 +35,13 @@ class TranscriptionService:
             Exception: If transcription fails
         """
         try:
+            # Set up client with provided API key or fallback to env
+            current_api_key = api_key or self.api_key
+            if not current_api_key:
+                raise ValueError("A Gemini API Key must be provided to transcribe audio.")
+                
+            client = genai.Client(api_key=current_api_key)
+            
             # Validate input file
             if not os.path.exists(audio_file_path):
                 raise FileNotFoundError(f"Audio file not found: {audio_file_path}")
@@ -70,7 +76,7 @@ class TranscriptionService:
             from google.genai import types
             import base64
             
-            response = self.client.models.generate_content(
+            response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=[
                     types.Part.from_bytes(
@@ -134,16 +140,24 @@ class TranscriptionService:
         estimated_time = base_time + (audio_duration_seconds * processing_rate)
         return max(estimated_time, 15)  # Minimum 15 seconds
     
-    def validate_api_key(self):
+    def validate_api_key(self, api_key=None):
         """
         Validate that the Gemini API key is working
         
+        Args:
+            api_key (str): Optional Gemini API Key directly passed from the UI
+            
         Returns:
             bool: True if API key is valid, False otherwise
         """
         try:
+            current_api_key = api_key or self.api_key
+            if not current_api_key:
+                return False
+                
+            client = genai.Client(api_key=current_api_key)
             # Try a simple API call to validate the key
-            response = self.client.models.generate_content(
+            response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents="Hello"
             )

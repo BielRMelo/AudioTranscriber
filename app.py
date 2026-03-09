@@ -22,8 +22,31 @@ def main():
     transcription_service = TranscriptionService()
     db_service = DatabaseService()
     
-    # Sidebar with database features
+    # Sidebar with configuration and database features
     with st.sidebar:
+        st.header("🔑 Configuration")
+        # Check for API key in env or session state
+        api_key = os.environ.get("GEMINI_API_KEY") or st.session_state.get("gemini_api_key", "")
+        
+        entered_api_key = st.text_input(
+            "Gemini API Key",
+            value=api_key,
+            type="password",
+            placeholder="AIzaSy...",
+            help="Enter your Google Gemini API Key. You can get one at https://ai.google.dev"
+        )
+        
+        if entered_api_key:
+            st.session_state["gemini_api_key"] = entered_api_key
+            # Temporarily set in env for google-genai to pick it up if needed by default, 
+            # though we will also pass it explicitly.
+            os.environ["GEMINI_API_KEY"] = entered_api_key
+            
+        if not entered_api_key:
+            st.warning("Please enter your Gemini API Key to use the transcription feature.")
+            
+        st.divider()
+        
         st.header("📊 Database Features")
         
         # Statistics
@@ -79,7 +102,11 @@ def main():
             
             # Process button
             if st.button("🔄 Process Audio", type="primary"):
-                process_audio_file(uploaded_file, audio_processor, transcription_service, db_service)
+                current_api_key = st.session_state.get("gemini_api_key")
+                if not current_api_key:
+                    st.error("Please enter your Gemini API Key in the sidebar first.")
+                else:
+                    process_audio_file(uploaded_file, audio_processor, transcription_service, db_service, current_api_key)
     
     with col2:
         # Language selection
@@ -92,7 +119,7 @@ def main():
         )
         st.session_state['selected_language'] = language
 
-def process_audio_file(uploaded_file, audio_processor, transcription_service, db_service):
+def process_audio_file(uploaded_file, audio_processor, transcription_service, db_service, api_key):
     """Process the uploaded audio file through conversion and transcription"""
     
     # Create progress tracking
@@ -129,7 +156,7 @@ def process_audio_file(uploaded_file, audio_processor, transcription_service, db
         status_text.text(f"🎤 Transcribing audio ({language_names.get(language, 'Portuguese')})...")
         progress_bar.progress(70)
         
-        transcription = transcription_service.transcribe_audio(mp3_path, language=language)
+        transcription = transcription_service.transcribe_audio(mp3_path, language=language, api_key=api_key)
         
         # Step 4: Save to database
         status_text.text("💾 Saving to database...")

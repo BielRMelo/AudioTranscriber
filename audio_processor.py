@@ -2,6 +2,7 @@ import ffmpeg
 import tempfile
 import os
 from pathlib import Path
+import imageio_ffmpeg
 
 class AudioProcessor:
     """Handles audio format conversion using FFmpeg"""
@@ -33,6 +34,16 @@ class AudioProcessor:
                 mp3_output_path = temp_mp3.name
             
             # Use ffmpeg to convert OGG to MP3
+            
+            # Determine ffmpeg executable path
+            ffmpeg_cmd = 'ffmpeg'
+            try:
+                # Test system ffmpeg
+                ffmpeg.probe(ogg_file_path)
+            except Exception:
+                # Fallback to imageio-ffmpeg bundled executable
+                ffmpeg_cmd = imageio_ffmpeg.get_ffmpeg_exe()
+                
             (
                 ffmpeg
                 .input(ogg_file_path)
@@ -44,7 +55,7 @@ class AudioProcessor:
                     ac=2  # Stereo channels
                 )
                 .overwrite_output()  # Overwrite output file if it exists
-                .run(capture_stdout=True, capture_stderr=True)
+                .run(cmd=ffmpeg_cmd, capture_stdout=True, capture_stderr=True)
             )
             
             # Verify the output file was created
@@ -57,6 +68,10 @@ class AudioProcessor:
             
             return mp3_output_path
             
+        except FileNotFoundError as e:
+            if "WinError 2" in str(e) or "No such file" in str(e):
+                raise Exception("O FFmpeg não foi encontrado no seu sistema. Por favor, instale o FFmpeg e adicione-o ao PATH do Windows para que o aplicativo possa converter o áudio.")
+            raise Exception(f"Audio conversion failed: {str(e)}")
         except Exception as e:
             # Handle FFmpeg specific errors
             if hasattr(e, 'stderr') and e.stderr:
@@ -85,8 +100,15 @@ class AudioProcessor:
             if file_extension not in self.supported_input_formats:
                 return False
             
+            # Use appropriate ffmpeg command
+            ffmpeg_cmd = 'ffmpeg'
+            try:
+                ffmpeg.probe(file_path)
+            except Exception:
+                ffmpeg_cmd = imageio_ffmpeg.get_ffmpeg_exe()
+            
             # Try to probe the file with ffmpeg to verify it's a valid audio file
-            probe = ffmpeg.probe(file_path)
+            probe = ffmpeg.probe(file_path, cmd=ffmpeg_cmd)
             
             # Check if there are audio streams
             audio_streams = [stream for stream in probe['streams'] if stream['codec_type'] == 'audio']
@@ -107,7 +129,13 @@ class AudioProcessor:
             dict: Audio file information
         """
         try:
-            probe = ffmpeg.probe(file_path)
+            ffmpeg_cmd = 'ffmpeg'
+            try:
+                ffmpeg.probe(file_path)
+            except Exception:
+                ffmpeg_cmd = imageio_ffmpeg.get_ffmpeg_exe()
+                
+            probe = ffmpeg.probe(file_path, cmd=ffmpeg_cmd)
             
             # Get general format information
             format_info = probe.get('format', {})
